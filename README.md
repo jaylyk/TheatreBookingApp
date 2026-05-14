@@ -52,17 +52,17 @@ docker compose up -d
 - `db/init.sql` — δημιουργία schema (πίνακες, FKs, ENUMs)
 - `db/seed.sql` — demo data (3 θέατρα, 4 παραστάσεις, 5 showtimes, 250 θέσεις)
 
-### 3. Keycloak — Ρύθμιση Realm (μία φορά)
+### 3. Keycloak — Realm (auto-import)
 
-1. Άνοιξε `http://localhost:8080` → **Administration Console** → `admin` / `admin`
-2. Δημιούργησε realm: **`theatre-booking`**
-3. **Clients → Create client:**
-   - Client ID: `mobile-app`
-   - Client type: OpenID Connect
-   - Client authentication: **Off** (public client)
-   - Valid redirect URIs: `mobile://*`, `exp://*`, `myapp://auth/callback`
-   - Advanced → PKCE Code Challenge Method: **S256**
-4. **Users → Create user:** username `testuser`, email, password (Temporary: Off)
+Το realm `theatre-booking` εισάγεται **αυτόματα** κατά την εκκίνηση του Keycloak container από το αρχείο `keycloak/realm-export.json`. Περιλαμβάνει:
+
+- Client `mobile-app` (public, PKCE S256) με όλα τα valid redirect URIs (`mobile://*`, `exp://*`, `myapp://auth/callback`)
+- Token lifespans: Access 30min, SSO Idle 8h, SSO Max 24h
+- Test user: **`testuser` / `12345`**
+
+Admin console: `http://localhost:8080` (admin/admin).
+
+> **Σημείωση:** Αν το realm υπάρχει ήδη (π.χ. από προηγούμενο run), το import παρακάμπτεται. Για clean re-import: `docker compose down -v` (διαγράφει volumes) και ξανά `docker compose up -d`.
 
 ### 4. Backend
 
@@ -96,6 +96,8 @@ npx expo start --android
 ```
 CN6035/
 ├── docker-compose.yml
+├── keycloak/
+│   └── realm-export.json         ← realm config + test user (auto-imported)
 ├── db/
 │   ├── init.sql                  ← schema (πίνακες, FKs, ENUMs, CHECKs)
 │   └── seed.sql                  ← demo data

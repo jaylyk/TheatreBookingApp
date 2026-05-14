@@ -6,11 +6,11 @@ const JWKS = createRemoteJWKSet(new URL(env.oidc.jwksUri));
 /**
  * Verifies the Bearer JWT against the Keycloak realm's public keys.
  * On success: attaches the decoded payload to req.user.
- * On failure: returns 401.
  *
- * Accepts tokens whose `iss` matches any of the configured issuers.
- * This is needed when the same Keycloak realm is reachable under
- * multiple hostnames (host vs. emulator).
+ * For public clients, Keycloak access tokens don't include an `aud`
+ * claim by default — they identify the authorized party via `azp`.
+ * We verify that azp matches our expected client ID, which is the
+ * recommended pattern for public-client setups.
  */
 export async function authRequired(req, res, next) {
   const header = req.headers.authorization;
@@ -21,9 +21,11 @@ export async function authRequired(req, res, next) {
 
   try {
     const { payload } = await jwtVerify(token, JWKS, {
-      issuer:   env.oidc.issuers,   // jose accepts an array of valid issuers
-      audience: env.oidc.audience,
+      issuer: env.oidc.issuers,
     });
+    if (payload.azp !== env.oidc.clientId) {
+      throw new Error(`unexpected azp: ${payload.azp}`);
+    }
     req.user = {
       sub:      payload.sub,
       email:    payload.email,

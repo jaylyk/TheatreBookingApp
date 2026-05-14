@@ -31,6 +31,6 @@ export const env = {
   oidc: {
     issuers,
     jwksUri:  process.env.OIDC_JWKS_URI,
-    audience: process.env.OIDC_AUDIENCE || 'account',
+    clientId: process.env.OIDC_CLIENT_ID || 'mobile-app',
   },
 };
