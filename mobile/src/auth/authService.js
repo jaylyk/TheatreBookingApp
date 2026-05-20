@@ -51,6 +51,7 @@ export function buildAuthRequest() {
     scopes:       ['openid', 'profile', 'email'],
     usePKCE:      true,
     responseType: AuthSession.ResponseType.Code,
+    prompt:       'login',   // always show login form — no SSO skip
   };
 }
 

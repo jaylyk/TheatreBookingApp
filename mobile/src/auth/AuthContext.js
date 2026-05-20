@@ -78,9 +78,28 @@ export function AuthProvider({ children }) {
   }, [promptAsync]);
 
   const signOut = useCallback(async () => {
+    // Backchannel logout: revoke the Keycloak session server-side
+    // so the next sign-in always shows the login form (no SSO skip).
+    if (refreshToken) {
+      try {
+        await fetch(
+          `${config.keycloak.issuer}/protocol/openid-connect/logout`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              client_id:     config.keycloak.clientId,
+              refresh_token: refreshToken,
+            }).toString(),
+          }
+        );
+      } catch (_) {
+        // Network error — still clear local tokens below
+      }
+    }
     await clearTokens();
     setAccessToken(null); setRefreshToken(null); setUser(null);
-  }, []);
+  }, [refreshToken]);
 
   const refresh = useCallback(async () => {
     if (!refreshToken) throw new Error('no_refresh_token');
